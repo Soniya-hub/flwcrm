@@ -1,70 +1,157 @@
-# Getting Started with Create React App
+# FlowCRM — Business Automation CRM
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern full-stack SaaS CRM built with **React + Tailwind CSS** (frontend) and **Spring Boot** (backend).
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## Demo Credentials
 
-### `npm start`
+| Role  | Email           | Password  |
+|-------|-----------------|-----------|
+| Admin | admin@crm.com   | admin123  |
+| User  | john@crm.com    | user123   |
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Frontend Setup (React)
 
-### `npm test`
+```bash
+npm install
+npm start         # http://localhost:3000
+npm run build     # production build
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Folder Structure
 
-### `npm run build`
+```
+src/
+├── App.js
+├── context/AuthContext.js          # JWT auth + user state
+├── data/mockData.js                # Seed data
+├── services/
+│   ├── leadService.js
+│   ├── taskService.js
+│   └── userService.js
+└── components/
+    ├── auth/      LoginPage, SignupPage, ProtectedRoute
+    ├── layout/    Layout, Sidebar, Navbar
+    ├── dashboard/ Dashboard, RevenueChart, LeadStatusChart, RecentActivity
+    ├── leads/     LeadsPage, LeadForm
+    ├── tasks/     TasksPage, TaskForm
+    ├── admin/     AdminPanel
+    └── ui/        Button, Card, Badge, Input, Modal
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Backend Setup (Spring Boot)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Prerequisites
+- Java 17+, Maven 3.8+, PostgreSQL 14+
 
-### `npm run eject`
+### Database
+```bash
+psql -U postgres -f backend/schema.sql
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Run
+```bash
+cd backend && mvn spring-boot:run    # http://localhost:8080
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Backend Structure
+```
+com/flowcrm/
+├── FlowCrmApplication.java
+├── config/SecurityConfig.java
+├── controller/  AuthController, LeadController, TaskController
+├── dto/         AuthDto, LeadDto, TaskDto
+├── entity/      User, Lead, Task
+├── exception/   GlobalExceptionHandler, ResourceNotFoundException, BadRequestException
+├── repository/  UserRepository, LeadRepository, TaskRepository
+├── security/    JwtUtils, JwtAuthFilter
+└── service/     AuthService, LeadService, TaskService, UserDetailsServiceImpl
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+---
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## API Endpoints
 
-## Learn More
+### Auth (no JWT required)
+```
+POST  /api/auth/login     { email, password }
+POST  /api/auth/signup    { name, email, password }
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Leads (JWT required)
+```
+GET    /api/leads            Get all / search with ?q=
+GET    /api/leads/{id}
+POST   /api/leads
+PUT    /api/leads/{id}
+DELETE /api/leads/{id}
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Tasks (JWT required)
+```
+GET    /api/tasks
+GET    /api/tasks/{id}
+POST   /api/tasks
+PUT    /api/tasks/{id}
+DELETE /api/tasks/{id}
+```
 
-### Code Splitting
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Connecting Frontend to Real Backend
 
-### Analyzing the Bundle Size
+Replace mock services with real axios calls:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```js
+// src/services/leadService.js
+import axios from 'axios';
+const api = axios.create({ baseURL: process.env.REACT_APP_API_URL });
+api.interceptors.request.use(cfg => {
+  const token = localStorage.getItem('crm_token');
+  if (token) cfg.headers.Authorization = `Bearer ${JSON.parse(atob(token)).token}`;
+  return cfg;
+});
+export const leadService = {
+  getAll: () => api.get('/api/leads').then(r => r.data),
+  create: (data) => api.post('/api/leads', data).then(r => r.data),
+  update: (id, data) => api.put(`/api/leads/${id}`, data).then(r => r.data),
+  delete: (id) => api.delete(`/api/leads/${id}`),
+};
+```
 
-### Making a Progressive Web App
+Set in `.env`:
+```
+REACT_APP_API_URL=http://localhost:8080
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+---
 
-### Advanced Configuration
+## Deployment
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### Frontend → Vercel
+1. Push to GitHub
+2. Import on [vercel.com](https://vercel.com) — `vercel.json` handles SPA routing
+3. Set env: `REACT_APP_API_URL=https://your-backend.onrender.com`
 
-### Deployment
+### Backend → Render
+1. New **Web Service** on [render.com](https://render.com)
+2. Build: `mvn clean install -DskipTests`
+3. Start: `java -jar target/flowcrm-backend-1.0.0.jar`
+4. Add env vars: `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `JWT_SECRET`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+---
 
-### `npm run build` fails to minify
+## Features
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- **JWT Auth** — Login, signup, role-based routes (Admin/User)
+- **Dashboard** — Stats, area chart, pie chart, activity feed, pipeline bars
+- **Lead Management** — CRUD, search, filter by status, assign to user
+- **Task Management** — CRUD, priority, checkbox status toggle, overdue detection
+- **Admin Panel** — User management, bar chart analytics, activity logs
+- **Fully Responsive** — Collapsible sidebar, works on all screen sizes
+- **Toast Notifications** — Every action gives instant feedback
