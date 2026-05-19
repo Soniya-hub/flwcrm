@@ -4,15 +4,6 @@ A modern full-stack SaaS CRM built with **React + Tailwind CSS** (frontend) and 
 
 ---
 
-## Demo Credentials
-
-| Role  | Email           | Password  |
-|-------|-----------------|-----------|
-| Admin | admin@crm.com   | admin123  |
-| User  | john@crm.com    | user123   |
-
----
-
 ## Frontend Setup (React)
 
 ```bash
