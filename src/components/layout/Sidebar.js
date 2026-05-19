@@ -2,7 +2,7 @@ import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
-  FiGrid, FiUsers, FiCheckSquare, FiShield, FiLogOut, FiTarget, FiZap,
+  FiGrid, FiCheckSquare, FiShield, FiLogOut, FiTarget, FiZap,
 } from "react-icons/fi";
 
 const navItems = [
