@@ -21,8 +21,8 @@ export default function Dashboard() {
         userService.getAll(),
       ]);
       setStats({
-        leads: leads.length,
-        tasks: tasks.filter(t => t.status !== "DONE").length,
+        leads: leads.totalElements,
+        tasks: tasks.content.filter(t => t.status !== "DONE").length,
         clients: users.length,
         revenue: 102000,
       });
