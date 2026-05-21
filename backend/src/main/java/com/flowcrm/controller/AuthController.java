@@ -17,6 +17,11 @@ public class AuthController {
     private final AuthService authService;
     private final RateLimitService rateLimitService;
 
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("OK");
+    }
+
     @PostMapping("/login")
     public ResponseEntity<AuthDto.AuthResponse> login(
             @Valid @RequestBody AuthDto.LoginRequest req,
